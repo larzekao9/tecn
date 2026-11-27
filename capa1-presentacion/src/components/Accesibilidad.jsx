@@ -10,7 +10,7 @@ const TEMAS = [
 const MODOS = [
   { valor: 'DIA', texto: 'Día', icono: 'sun' },
   { valor: 'NOCHE', texto: 'Noche', icono: 'moon' },
-  { valor: 'AUTO', texto: 'Automático', icono: 'auto' },
+  { valor: 'AUTO', texto: 'Automáticooo', icono: 'auto' },
 ]
 
 /** Panel de temas y accesibilidad: segmento, modo dia/noche (manual o por horario), tamano de letra y contraste. */

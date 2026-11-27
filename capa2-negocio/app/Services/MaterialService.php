@@ -74,8 +74,10 @@ class MaterialService
     /** Enlace firmado y temporal (relativo: pasa por el proxy /api del front) para ver el video; null si el archivo no esta cargado. */
     public static function urlVideo(int $id, ?string $ruta): ?string
     {
+        // La firma es relativa (/api/videos/..); se antepone la carpeta donde esta publicada la app
+        // (ej. /inf513/grupo12sa/proyecto2) para que el navegador la encuentre. En local queda vacia.
         return $ruta && Storage::disk('local')->exists($ruta)
-            ? URL::temporarySignedRoute('material.video', now()->addMinutes(config('canal11.video_enlace_minutos')), ['id' => $id], false)
+            ? request()->getBaseUrl() . URL::temporarySignedRoute('material.video', now()->addMinutes(config('canal11.video_enlace_minutos')), ['id' => $id], false)
             : null;
     }
 

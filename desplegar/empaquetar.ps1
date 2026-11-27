@@ -71,6 +71,8 @@ foreach ($d in 'storage\app\private\videos', 'storage\logs', 'storage\framework\
                'storage\framework\views', 'storage\framework\testing') {
     New-Item -ItemType Directory -Force (Join-Path $lar $d) | Out-Null
 }
+# videos de demostracion (los de los materiales sembrados); los que suben los usuarios en el servidor no se tocan
+Copy-Item (Join-Path $back 'storage\app\private\videos\demo') (Join-Path $lar 'storage\app\private\videos\demo') -Recurse -Force
 
 Paso "Instalando dependencias de produccion para PHP $PhpServidor (composer --no-dev)"
 # Solo en la copia: el composer.lock del proyecto (resuelto para el PHP de Docker) no se toca

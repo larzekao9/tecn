@@ -190,7 +190,7 @@ export function Bitacora() {
             } },
             { clave: 'recurso', titulo: 'Recurso', render: (b) => <span className="text-sm">{b.recurso || '—'}</span> },
             { clave: 'detalle', titulo: 'Detalle', render: (b) => <span className="text-sm">{b.detalle || '—'}</span> },
-            { clave: 'ip', titulo: 'IP', render: (b) => <span className="font-mono text-sm" title={b.agente_usuario || undefined}>{b.ip || '—'}</span> },
+            { clave: 'ip', titulo: 'IP', render: (b) => <span className="font-mono text-sm">{b.ip || '—'}</span> },
           ]} />
         )}
       </Tarjeta>

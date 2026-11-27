@@ -20,6 +20,29 @@ use Illuminate\Http\Request;
 /** Notificaciones, contador de visitas, busqueda global, subida de videos y opciones de formularios. */
 class GeneralController extends Controller
 {
+    /**
+     * Salud del sistema (publico, sin datos sensibles): el servidor responde y la base de datos acepta conexiones
+     * y tiene las tablas. 200 si todo esta bien; 503 con el motivo si la BD no responde o esta vacia.
+     * Lo usan el despliegue (antes y despues de subir) y la vigilancia programada de GitHub Actions.
+     */
+    public function salud(): JsonResponse
+    {
+        try {
+            Bd::filas('SELECT 1 FROM usuario LIMIT 1');
+            Bd::filas('SELECT 1 FROM parrilla LIMIT 1');
+            return response()->json(['servidor' => 'ok', 'bd' => 'ok']);
+        } catch (\Throwable $e) {
+            $estado = $e instanceof \PDOException || $e->getPrevious() instanceof \PDOException
+                ? (string) ($e->getPrevious()?->getCode() ?: $e->getCode()) : '';
+            $motivo = match (true) {
+                in_array($estado, ['42P01', '3F000'], true) => 'La base de datos responde pero faltan el esquema o las tablas (¿la borraron?).',
+                str_starts_with($estado, '28') => 'La base de datos rechaza el usuario o la contraseña del .env.',
+                default => 'La base de datos no responde (caída o sin conexión).',
+            };
+            return response()->json(['servidor' => 'ok', 'bd' => 'error', 'motivo' => $motivo, 'codigo' => $estado ?: null], 503);
+        }
+    }
+
     public function notificaciones(Request $r, NotificacionService $n): JsonResponse
     {
         return response()->json(['ok' => true, 'datos' => $n->listar($r->user(), $r->boolean('no_leidas')), 'sin_leer' => $n->noLeidas($r->user())]);

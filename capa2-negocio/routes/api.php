@@ -29,6 +29,7 @@ if (!function_exists('cmd')) {
 // --- Publicas ---
 Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
 Route::post('visitas', [GeneralController::class, 'visita'])->middleware('throttle:120,1');
+Route::get('salud', [GeneralController::class, 'salud'])->middleware('throttle:30,1');
 // Video de un material: sin token (lo pide la etiqueta <video>), protegido por firma temporal emitida en mosMat
 Route::get('videos/{id}', [GeneralController::class, 'verVideo'])->whereNumber('id')->middleware('signed:relative')->name('material.video');
 

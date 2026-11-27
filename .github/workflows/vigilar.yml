@@ -1,0 +1,22 @@
+# Vigilancia: cada hora comprueba que el servidor de tecnoweb responde y que la base de datos esta en pie y con
+# sus tablas (por si la tiran o la borran). Si algo falla la ejecucion queda en rojo en Actions con el motivo y
+# GitHub manda un correo. No cambia nada en el servidor. Tambien se puede correr a mano (Run workflow).
+name: Vigilar servidor
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+jobs:
+  vigilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Servidor y base de datos
+        env:
+          SITIO_URL: ${{ vars.SITIO_URL }}
+          WEB_BASE: ${{ vars.WEB_BASE }}
+        run: |
+          URL="${SITIO_URL%/}/${WEB_BASE#/}" bash .github/scripts/salud.sh vigilar

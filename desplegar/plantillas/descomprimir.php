@@ -38,6 +38,12 @@ if (!$zip->extractTo(__DIR__)) {
 $zip->close();
 unlink($archivo);
 
+// Caches de Laravel de la version anterior (config, rutas, eventos, paquetes): se borran para que el codigo
+// nuevo se use tal cual; Laravel regenera solo los que necesita. No se toca la base de datos.
+foreach (['config', 'routes-v7', 'events', 'packages', 'services'] as $c) {
+    @unlink(__DIR__ . "/laravel/bootstrap/cache/{$c}.php");
+}
+
 // Lo descomprimido queda a nombre del usuario de Apache: se abre a escritura para que la cuenta FTP del grupo
 // pueda reemplazarlo o borrarlo y Laravel pueda escribir en storage/ y bootstrap/cache/
 $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__, FilesystemIterator::SKIP_DOTS),

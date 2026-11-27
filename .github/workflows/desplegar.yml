@@ -1,10 +1,17 @@
 # Despliegue continuo: cada push a main compila el frontend (React) y el backend (Laravel) y los sube al
-# servidor del curso (tecnoweb) por FTP como un solo zip, que descomprimir.php abre alla; luego instalar.php
-# migra y siembra la BD. La configuracion del servidor (laravel/.env) ya esta en el servidor y no se toca.
+# servidor del curso (tecnoweb) por FTP como un solo zip, que descomprimir.php abre alla.
+#
+# NO toca la base de datos: no migra, no siembra, no borra nada. La configuracion del servidor (laravel/.env)
+# ya esta en el servidor y no se pisa. Si alguna vez hay que preparar la BD se hace a mano
+# (desplegar/empaquetar.ps1 -Instalar).
+#
+# Antes de subir comprueba que el servidor responde y que la base de datos esta en pie y con sus tablas;
+# si algo falla se detiene SIN subir nada y el motivo aparece en rojo en la pestaña Actions (y GitHub
+# manda un correo). Despues de subir vuelve a comprobar que la app, la API y la base de datos responden.
 #
 # Configuracion en GitHub (Settings > Secrets and variables > Actions):
-#   variables: FTP_HOST, FTP_USUARIO, FTP_CARPETA (ej. /canal11), SITIO_URL (ej. https://www.tecnoweb.org.bo),
-#              WEB_BASE (ruta de la app en el sitio, ej. /inf513/grupo12sa/canal11/)
+#   variables: FTP_HOST, FTP_USUARIO, FTP_CARPETA (ej. /proyecto2), SITIO_URL (ej. https://www.tecnoweb.org.bo),
+#              WEB_BASE (ruta de la app en el sitio, ej. /inf513/grupo12sa/proyecto2/)
 #   secreto:   FTP_CLAVE
 name: Desplegar en tecnoweb
 
@@ -34,8 +41,14 @@ jobs:
       - name: Verificar configuracion
         run: |
           for v in FTP_HOST FTP_USUARIO FTP_CARPETA SITIO_URL WEB_BASE FTP_CLAVE; do
-            [ -n "${!v}" ] || { echo "Falta la variable o secreto $v en GitHub"; exit 1; }
+            [ -n "${!v}" ] || { echo "::error::Falta la variable o secreto $v en GitHub"; exit 1; }
           done
+          URL="${SITIO_URL%/}/${WEB_BASE#/}"
+          echo "URL=${URL%/}" >> "$GITHUB_ENV"
+
+      # ---------- Antes de subir: servidor y base de datos ----------
+      - name: Verificar servidor y base de datos (antes de subir)
+        run: bash .github/scripts/salud.sh antes
 
       # ---------- Capa 1: frontend ----------
       - uses: actions/setup-node@v4
@@ -56,7 +69,7 @@ jobs:
           extensions: pdo_pgsql, zip, mbstring
           tools: composer:v2
           coverage: none
-      - name: Preparar backend (sin dependencias de desarrollo, videos, logs ni .env)
+      - name: Preparar backend (sin dependencias de desarrollo, logs ni .env; solo los videos de demostracion)
         run: |
           L="$RUNNER_TEMP/web/laravel"
           mkdir -p "$L"
@@ -67,6 +80,9 @@ jobs:
             --exclude '*.log' --exclude 'bootstrap/cache/*.php'
           mkdir -p "$L/storage/app/private/videos" "$L/storage/logs" "$L/storage/framework/cache/data" \
                    "$L/storage/framework/sessions" "$L/storage/framework/views" "$L/storage/framework/testing"
+          # videos de demostracion (los de los materiales sembrados); los que suben los usuarios en el servidor no se tocan
+          cp -r capa2-negocio/storage/app/private/videos/demo "$L/storage/app/private/videos/demo"
+          echo "videos de demostracion: $(ls "$L/storage/app/private/videos/demo" | wc -l)"
           cd "$L"
           composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
           cd -
@@ -81,41 +97,26 @@ jobs:
           CLAVE=$(openssl rand -hex 16)
           echo "::add-mask::$CLAVE"
           echo "CLAVE=$CLAVE" >> "$GITHUB_ENV"
-          for f in descomprimir.php instalar.php; do
-            sed "s/__CLAVE__/$CLAVE/" "$GITHUB_WORKSPACE/desplegar/plantillas/$f" > "$RUNNER_TEMP/$f"
-          done
+          sed "s/__CLAVE__/$CLAVE/" "$GITHUB_WORKSPACE/desplegar/plantillas/descomprimir.php" > "$RUNNER_TEMP/descomprimir.php"
           ls -lh "$RUNNER_TEMP/canal11.zip"
 
-      # ---------- Subida y puesta en marcha ----------
+      # ---------- Subida (solo codigo: frontend y backend) ----------
       - name: Subir por FTP
         run: |
           FTP="ftp://$FTP_HOST/${FTP_CARPETA#/}"
-          for f in canal11.zip descomprimir.php instalar.php; do
+          for f in canal11.zip descomprimir.php; do
             echo "subiendo $f"
-            curl -sS --fail --retry 3 --ftp-create-dirs --ftp-pasv --user "$FTP_USUARIO:$FTP_CLAVE" \
-              -T "$RUNNER_TEMP/$f" "${FTP%/}/$f"
+            curl -sS --fail --retry 3 --connect-timeout 30 --ftp-create-dirs --ftp-pasv --user "$FTP_USUARIO:$FTP_CLAVE" \
+              -T "$RUNNER_TEMP/$f" "${FTP%/}/$f" \
+              || { echo "::error::No se pudo subir $f por FTP (servidor FTP caido o credenciales)"; exit 1; }
           done
 
       - name: Descomprimir en el servidor
         run: |
-          URL="${SITIO_URL%/}/${WEB_BASE#/}"
-          curl -sS -L --fail --max-time 900 "${URL%/}/descomprimir.php?clave=$CLAVE" | tee salida.txt
-          grep -q 'Descomprimidos' salida.txt
+          curl -sS -L --fail --max-time 900 "$URL/descomprimir.php?clave=$CLAVE" | tee salida.txt \
+            || { echo "::error::El servidor no pudo descomprimir el paquete"; exit 1; }
+          grep -q 'Descomprimidos' salida.txt || { echo "::error::El servidor no confirmo la descompresion"; exit 1; }
 
-      - name: Migrar y sembrar la base de datos
-        run: |
-          URL="${SITIO_URL%/}/${WEB_BASE#/}"
-          curl -sS -L --fail --max-time 900 "${URL%/}/instalar.php?clave=$CLAVE" | tee salida.txt
-          grep -q 'Base de datos lista' salida.txt
-
-      - name: Comprobar que responde
-        run: |
-          URL="${SITIO_URL%/}/${WEB_BASE#/}"
-          for ruta in "" "up"; do
-            codigo=$(curl -sS -L -o /dev/null -w '%{http_code}' "${URL%/}/$ruta")
-            echo "$codigo ${URL%/}/$ruta"
-            [ "$codigo" = 200 ] || exit 1
-          done
-          codigo=$(curl -sS -L -o /dev/null -w '%{http_code}' "${URL%/}/laravel/.env")
-          echo "$codigo ${URL%/}/laravel/.env (debe ser 403)"
-          [ "$codigo" = 403 ] || exit 1
+      # ---------- Despues de subir: todo responde ----------
+      - name: Comprobar que responde (despues de subir)
+        run: bash .github/scripts/salud.sh despues

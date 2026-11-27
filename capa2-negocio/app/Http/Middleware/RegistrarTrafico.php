@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 class RegistrarTrafico
 {
     /** Rutas de sondeo frecuente que no aportan a la bitacora. */
-    private const IGNORAR = ['api/notificaciones/contador', 'api/visitas'];
+    private const IGNORAR = ['api/notificaciones/contador', 'api/visitas', 'api/salud'];
 
     public function __construct(private BitacoraService $bitacora)
     {

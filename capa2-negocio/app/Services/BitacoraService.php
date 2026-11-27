@@ -13,7 +13,7 @@ use Throwable;
  * Bitacora: unico registro de accesos y acciones del sistema (tabla bitacora, solo insercion).
  *  - accion: LOGIN, LOGIN_FALLIDO, LOGOUT (Autenticacion), ACCESO (cada peticion a un recurso de la API, tambien los
  *    accesos denegados), ACCION (cada registro, modificacion o eliminacion de datos) y ERROR (errores del sistema).
- *  - recurso: el modulo o dato afectado; detalle: que paso; ip y agente_usuario: desde donde (IP y navegador).
+ *  - recurso: el modulo o dato afectado; detalle: que paso; ip: desde donde.
  * Si la bitacora falla NO se cancela la operacion del usuario: solo se deja constancia en el log.
  */
 class BitacoraService
@@ -34,13 +34,11 @@ class BitacoraService
     public function registrar(string $accion, ?Request $r, ?int $idUsuario = null, ?string $recurso = null, ?string $detalle = null): void
     {
         try {
-            $agente = $r?->userAgent();
-            Bd::ejecutar('INSERT INTO bitacora (id_usuario, accion, recurso, detalle, ip, agente_usuario) VALUES (?, ?, ?, ?, ?, ?)', [
+            Bd::ejecutar('INSERT INTO bitacora (id_usuario, accion, recurso, detalle, ip) VALUES (?, ?, ?, ?, ?)', [
                 $idUsuario, $accion,
                 $recurso === null ? null : mb_substr($recurso, 0, 60),
                 $detalle === null || $detalle === '' ? null : mb_substr($detalle, 0, 500),
                 $r?->ip(),
-                $agente ? mb_substr($agente, 0, 255) : null,
             ]);
         } catch (Throwable $e) {
             Log::warning('[Bitacora] ' . $e->getMessage());
@@ -95,7 +93,7 @@ class BitacoraService
 
         $sql = "SELECT b.id_bitacora AS id, to_char(b.fecha, 'YYYY-MM-DD HH24:MI:SS') AS fecha, b.accion,"
             . " coalesce(u.nombre || ' ' || u.apellido, '') AS usuario, coalesce(b.recurso, '') AS recurso,"
-            . " coalesce(b.detalle, '') AS detalle, coalesce(b.ip, '') AS ip, coalesce(b.agente_usuario, '') AS agente_usuario"
+            . " coalesce(b.detalle, '') AS detalle, coalesce(b.ip, '') AS ip"
             . ' FROM bitacora b LEFT JOIN usuario u ON u.id_usuario = b.id_usuario WHERE true';
         $params = [];
         if ($accion !== '*') {

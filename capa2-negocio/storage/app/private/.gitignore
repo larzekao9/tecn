@@ -1,2 +1,8 @@
 *
 !.gitignore
+# Solo los videos de demostracion (los que usan los materiales sembrados) van al repositorio y al despliegue;
+# los videos que suben los usuarios quedan fuera.
+!videos/
+videos/*
+!videos/demo/
+!videos/demo/*.mp4

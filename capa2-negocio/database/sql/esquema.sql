@@ -18,16 +18,16 @@ CREATE TABLE recurso (
     ruta        VARCHAR(120) NOT NULL UNIQUE
 );
 
--- rol agrupa permiso; permiso autoriza recurso: que puede hacer un rol en una pantalla (ver, crear, editar, eliminar)
+-- rol accede a recurso (muchos a muchos): permiso dice que puede hacer el rol en esa pantalla (ver, crear, editar, eliminar).
+-- Tabla intermedia: su llave es el par rol-recurso, sin id propio (igual que escaleta y pauta_espacio).
 CREATE TABLE permiso (
-    id_permiso  SERIAL   PRIMARY KEY,
     id_rol      INTEGER  NOT NULL REFERENCES rol (id_rol) ON DELETE CASCADE,
     id_recurso  INTEGER  NOT NULL REFERENCES recurso (id_recurso) ON DELETE CASCADE,
     ver         BOOLEAN  NOT NULL DEFAULT FALSE,
     crear       BOOLEAN  NOT NULL DEFAULT FALSE,
     editar      BOOLEAN  NOT NULL DEFAULT FALSE,
     eliminar    BOOLEAN  NOT NULL DEFAULT FALSE,
-    CONSTRAINT uq_permiso_rol_recurso UNIQUE (id_rol, id_recurso)
+    PRIMARY KEY (id_rol, id_recurso)
 );
 CREATE INDEX idx_permiso_recurso ON permiso (id_recurso);
 

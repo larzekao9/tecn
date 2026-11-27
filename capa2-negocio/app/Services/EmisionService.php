@@ -102,7 +102,7 @@ class EmisionService
         $hora = $v->hora($p[1] ?? null, 'hora_spot');
         $estado = $v->opcion($p[2] ?? null, 'estado', self::ESTADOS_SPOT);
         $v->verificar();
-        $s = Bd::fila("SELECT s.id_spot, s.estado, s.id_bloque, m.titulo, pa.nombre AS pauta, (c.id_conciliacion IS NOT NULL) AS con_emision"
+        $s = Bd::fila("SELECT s.estado, s.id_bloque, m.titulo, pa.nombre AS pauta, (c.id_conciliacion IS NOT NULL) AS con_emision"
             . ' FROM spot s JOIN bloque b ON b.id_bloque = s.id_bloque JOIN parrilla pr ON pr.id_parrilla = b.id_parrilla'
             . ' JOIN pauta pa ON pa.id_pauta = s.id_pauta JOIN material m ON m.id_material = pa.id_material'
             . ' LEFT JOIN conciliacion c ON c.id_bloque = s.id_bloque WHERE pr.fecha = ? AND s.hora = ?', [$fecha, $hora]);
@@ -115,7 +115,7 @@ class EmisionService
         if ($s['estado'] === $estado) {
             throw new NegocioException("El spot de las <b>{$hora}</b> ya está <b>{$estado}</b>.");
         }
-        Bd::ejecutar('UPDATE spot SET estado = ? WHERE id_spot = ?', [$estado, $s['id_spot']]);
+        Bd::ejecutar('UPDATE spot SET estado = ? WHERE id_bloque = ? AND hora = ?', [$estado, $s['id_bloque'], $hora]);
         $this->bitacora->accion($quien, BitacoraService::MODIFICAR, 'spot');
         return ['titulo' => 'Spot actualizado', 'mensaje' => 'El spot <b>' . Validador::esc($s['titulo']) . "</b> de las {$hora} quedó <b>{$estado}</b>."
             . ($estado === 'NO_EMITIDO' ? ' El pase vuelve a quedar disponible en la pauta.' : ''), 'datos' => $this->conciliacion($fecha)];
@@ -142,7 +142,7 @@ class EmisionService
             . ' FROM bloque b JOIN parrilla pr ON pr.id_parrilla = b.id_parrilla LEFT JOIN programa p ON p.id_programa = b.id_programa'
             . ' LEFT JOIN conciliacion c ON c.id_bloque = b.id_bloque'
             . ' WHERE b.id_parrilla = ? ORDER BY b.hora_inicio', [$id]);
-        $spots = Bd::filas("SELECT s.id_spot AS id, s.id_bloque, to_char(s.hora, 'HH24:MI:SS') AS hora, m.id_material AS material, m.titulo, m.duracion_seg,"
+        $spots = Bd::filas("SELECT s.id_bloque || '-' || to_char(s.hora, 'HH24:MI:SS') AS id, s.id_bloque, to_char(s.hora, 'HH24:MI:SS') AS hora, m.id_material AS material, m.titulo, m.duracion_seg,"
             . " pa.nombre AS pauta, ua.nombre || ' ' || ua.apellido AS anunciante, s.estado FROM spot s JOIN pauta pa ON pa.id_pauta = s.id_pauta"
             . ' JOIN material m ON m.id_material = pa.id_material JOIN usuario ua ON ua.id_usuario = pa.id_usuario'
             . ' JOIN bloque b ON b.id_bloque = s.id_bloque WHERE b.id_parrilla = ? ORDER BY s.hora', [$id]);

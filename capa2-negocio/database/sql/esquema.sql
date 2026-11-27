@@ -329,14 +329,14 @@ CREATE TRIGGER trg_pauta_cerrada BEFORE UPDATE ON pauta FOR EACH ROW EXECUTE FUN
 CREATE TRIGGER trg_pauta_espacio_cerrada BEFORE INSERT OR UPDATE OR DELETE ON pauta_espacio
     FOR EACH ROW EXECUTE FUNCTION fn_pauta_cerrada();
 
--- pauta se transmite en bloque (pausa comercial): spot es la clase asociacion (hora y estado de cada salida)
+-- pauta se transmite en bloque (pausa comercial): spot es la clase asociacion (hora y estado de cada salida).
+-- Su llave es el bloque y la hora de la salida, sin id propio.
 CREATE TABLE spot (
-    id_spot    SERIAL      PRIMARY KEY,
     id_pauta   INTEGER     NOT NULL REFERENCES pauta (id_pauta),
     id_bloque  INTEGER     NOT NULL REFERENCES bloque (id_bloque) ON DELETE CASCADE,
     hora       TIME        NOT NULL,
     estado     VARCHAR(20) NOT NULL DEFAULT 'PROGRAMADO' CHECK (estado IN ('PROGRAMADO', 'EMITIDO', 'NO_EMITIDO')),
-    UNIQUE (id_bloque, hora)
+    PRIMARY KEY (id_bloque, hora)
 );
 CREATE INDEX idx_spot_pauta ON spot (id_pauta);
 
@@ -373,14 +373,14 @@ BEGIN
         RAISE EXCEPTION 'La hora % no esta en ningun espacio contratado por la pauta %.', NEW.hora, pa.nombre;
     END IF;
     SELECT count(*) INTO usados FROM spot s
-     WHERE s.id_pauta = NEW.id_pauta AND s.estado <> 'NO_EMITIDO' AND s.id_spot IS DISTINCT FROM NEW.id_spot
+     WHERE s.id_pauta = NEW.id_pauta AND s.estado <> 'NO_EMITIDO' AND (s.id_bloque, s.hora) IS DISTINCT FROM (OLD.id_bloque, OLD.hora)
        AND s.hora >= es.hora_inicio AND s.hora < es.hora_fin;
     IF usados >= es.salidas_por_dia * (pa.fecha_fin - pa.fecha_inicio + 1) THEN
         RAISE EXCEPTION 'La pauta % ya uso sus % salidas del espacio %.', pa.nombre, es.salidas_por_dia * (pa.fecha_fin - pa.fecha_inicio + 1), es.nombre;
     END IF;
     SELECT coalesce(sum(p2.duracion_spot), 0) INTO usados
       FROM spot s JOIN pauta p2 ON p2.id_pauta = s.id_pauta JOIN bloque b2 ON b2.id_bloque = s.id_bloque
-     WHERE b2.id_parrilla = b.id_parrilla AND s.estado <> 'NO_EMITIDO' AND s.id_spot IS DISTINCT FROM NEW.id_spot
+     WHERE b2.id_parrilla = b.id_parrilla AND s.estado <> 'NO_EMITIDO' AND (s.id_bloque, s.hora) IS DISTINCT FROM (OLD.id_bloque, OLD.hora)
        AND s.hora >= es.hora_inicio AND s.hora < es.hora_fin;
     IF usados + pa.duracion_spot > es.segundos_por_dia THEN
         RAISE EXCEPTION 'El espacio % ya no tiene cupo el %: usa % de % segundos.', es.nombre, f, usados, es.segundos_por_dia;

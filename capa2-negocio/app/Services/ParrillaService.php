@@ -308,7 +308,7 @@ class ParrillaService
         $id = $this->resolver($fecha);
         $ficha = Bd::fila(self::SELECT . ' WHERE p.id_parrilla = ?', [$id]);
         $ficha['bloques'] = $this->bloques($id);
-        $ficha['spots'] = Bd::filas("SELECT s.id_spot AS id, s.id_bloque, to_char(s.hora, 'HH24:MI:SS') AS hora, pa.nombre AS pauta,"
+        $ficha['spots'] = Bd::filas("SELECT s.id_bloque || '-' || to_char(s.hora, 'HH24:MI:SS') AS id, s.id_bloque, to_char(s.hora, 'HH24:MI:SS') AS hora, pa.nombre AS pauta,"
             . " ua.nombre || ' ' || ua.apellido AS anunciante, m.id_material AS material, m.titulo, m.duracion_seg, s.estado"
             . ' FROM spot s JOIN pauta pa ON pa.id_pauta = s.id_pauta JOIN usuario ua ON ua.id_usuario = pa.id_usuario'
             . ' JOIN material m ON m.id_material = pa.id_material JOIN bloque b ON b.id_bloque = s.id_bloque WHERE b.id_parrilla = ? ORDER BY s.hora', [$id]);

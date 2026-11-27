@@ -41,7 +41,7 @@ class PautaService
         . ' pa.id_material, m.titulo AS titulo_spot'
         . ' FROM pauta pa JOIN usuario u ON u.id_usuario = pa.id_usuario JOIN material m ON m.id_material = pa.id_material';
 
-    private const SELECT_SPOT = "SELECT s.id_spot AS id, to_char(pr.fecha, 'YYYY-MM-DD') AS fecha, to_char(s.hora, 'HH24:MI:SS') AS hora,"
+    private const SELECT_SPOT = "SELECT s.id_bloque || '-' || to_char(s.hora, 'HH24:MI:SS') AS id, to_char(pr.fecha, 'YYYY-MM-DD') AS fecha, to_char(s.hora, 'HH24:MI:SS') AS hora,"
         . ' pa.nombre AS pauta, m.id_material AS material, m.titulo, m.duracion_seg, s.estado,'
         . " coalesce((SELECT e.nombre FROM espacio e WHERE s.hora >= e.hora_inicio AND s.hora < e.hora_fin), '') AS espacio,"
         . " to_char(b.hora_inicio, 'HH24:MI:SS') || '-' || to_char(b.hora_fin, 'HH24:MI:SS') AS pausa"
@@ -326,7 +326,7 @@ class PautaService
             if ($s['estado'] !== 'LISTA') {
                 continue;
             }
-            Bd::insertar('INSERT INTO spot (id_pauta, id_bloque, hora) VALUES (?, ?, ?)', [$idPauta, $s['id_bloque'], $s['hora_spot']], 'id_spot');
+            Bd::ejecutar('INSERT INTO spot (id_pauta, id_bloque, hora) VALUES (?, ?, ?)', [$idPauta, $s['id_bloque'], $s['hora_spot']]);
             $this->bitacora->accion($quien, BitacoraService::INSERTAR, 'spot', "{$pa['nombre']} {$s['fecha']} {$s['hora_spot']}");
             $insertados++;
         }
@@ -457,11 +457,11 @@ class PautaService
     private function retirarFuturos(int $idPauta): int
     {
         $n = 0;
-        foreach (Bd::filas("SELECT s.id_spot, to_char(pr.fecha, 'YYYY-MM-DD') AS fecha, to_char(b.hora_inicio, 'HH24:MI:SS') AS inicio"
+        foreach (Bd::filas("SELECT s.id_bloque, to_char(s.hora, 'HH24:MI:SS') AS hora_spot, to_char(pr.fecha, 'YYYY-MM-DD') AS fecha, to_char(b.hora_inicio, 'HH24:MI:SS') AS inicio"
             . ' FROM spot s JOIN bloque b ON b.id_bloque = s.id_bloque JOIN parrilla pr ON pr.id_parrilla = b.id_parrilla'
             . " WHERE s.id_pauta = ? AND s.estado = 'PROGRAMADO' AND NOT EXISTS (SELECT 1 FROM conciliacion c WHERE c.id_bloque = b.id_bloque)", [$idPauta]) as $s) {
             if (Reloj::instante($s['fecha'], $s['inicio'])->greaterThan(Reloj::ahora())) {
-                Bd::ejecutar('DELETE FROM spot WHERE id_spot = ?', [$s['id_spot']]);
+                Bd::ejecutar('DELETE FROM spot WHERE id_bloque = ? AND hora = ?', [$s['id_bloque'], $s['hora_spot']]);
                 $n++;
             }
         }

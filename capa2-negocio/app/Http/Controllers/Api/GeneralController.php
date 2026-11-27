@@ -115,12 +115,83 @@ class GeneralController extends Controller
         return response()->file($disco->path($ruta), ['Content-Type' => $tipo]);
     }
 
-    /** Duración del video en segundos, leída con ffprobe. null si no se pudo determinar. */
+    /**
+     * Duración del video en segundos. null si no se pudo determinar.
+     * Primero lee la cabecera MP4/MOV en PHP puro (funciona en hosting sin ffprobe ni shell_exec);
+     * si no sirve (p. ej. MXF), intenta con ffprobe cuando el servidor lo tiene.
+     */
     private function duracionDelVideo(string $path): ?int
     {
-        $salida = @shell_exec('ffprobe -v error -show_entries format=duration -of csv=p=0 ' . escapeshellarg($path) . ' 2>/dev/null');
-        $seg = is_string($salida) ? (float) trim($salida) : 0.0;
-        return $seg >= 1 ? (int) round($seg) : null;
+        $seg = $this->duracionMp4($path);
+        if ($seg === null && function_exists('shell_exec')) {
+            $salida = @shell_exec('ffprobe -v error -show_entries format=duration -of csv=p=0 ' . escapeshellarg($path) . ' 2>/dev/null');
+            $seg = is_string($salida) ? (float) trim($salida) : null;
+        }
+        return $seg !== null && $seg >= 1 ? (int) round($seg) : null;
+    }
+
+    /** Lee la duración del átomo moov/mvhd de un MP4/MOV (ISO BMFF). null si no lo encuentra. */
+    private function duracionMp4(string $path): ?float
+    {
+        $f = @fopen($path, 'rb');
+        if (!$f) {
+            return null;
+        }
+        try {
+            $tamano = filesize($path);
+            $moov = $this->buscarCaja($f, 0, $tamano, 'moov');
+            if ($moov === null) {
+                return null;
+            }
+            $mvhd = $this->buscarCaja($f, $moov[0], $moov[1], 'mvhd');
+            if ($mvhd === null) {
+                return null;
+            }
+            fseek($f, $mvhd[0]);
+            $version = ord((string) fread($f, 4)[0] ?? "\0");
+            if ($version === 1) {
+                fseek($f, 16, SEEK_CUR); // creation(8) + modification(8)
+                $escala = unpack('N', (string) fread($f, 4))[1] ?? 0;
+                $d = unpack('J', (string) fread($f, 8))[1] ?? 0;
+            } else {
+                fseek($f, 8, SEEK_CUR); // creation(4) + modification(4)
+                $escala = unpack('N', (string) fread($f, 4))[1] ?? 0;
+                $d = unpack('N', (string) fread($f, 4))[1] ?? 0;
+            }
+            return $escala > 0 ? $d / $escala : null;
+        } finally {
+            fclose($f);
+        }
+    }
+
+    /** Busca una caja por tipo entre [$inicio, $fin). Devuelve [inicio del contenido, fin de la caja] o null. */
+    private function buscarCaja($f, int $inicio, int $fin, string $tipo): ?array
+    {
+        $pos = $inicio;
+        while ($pos + 8 <= $fin) {
+            fseek($f, $pos);
+            $cab = fread($f, 8);
+            if ($cab === false || strlen($cab) < 8) {
+                return null;
+            }
+            $tam = unpack('N', substr($cab, 0, 4))[1];
+            $t = substr($cab, 4, 4);
+            $cabecera = 8;
+            if ($tam === 1) { // tamaño de 64 bits
+                $tam = unpack('J', (string) fread($f, 8))[1] ?? 0;
+                $cabecera = 16;
+            } elseif ($tam === 0) { // hasta el final
+                $tam = $fin - $pos;
+            }
+            if ($tam < $cabecera) {
+                return null;
+            }
+            if ($t === $tipo) {
+                return [$pos + $cabecera, min($pos + $tam, $fin)];
+            }
+            $pos += $tam;
+        }
+        return null;
     }
 
     /** Listas para los selectores de los formularios (solo datos que el rol puede consultar). */

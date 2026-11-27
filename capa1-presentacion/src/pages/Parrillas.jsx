@@ -19,7 +19,7 @@ export function Parrillas() {
   const hoy = hoyLocal()
   return (
     <Pagina titulo="Parrillas de programación" subtitulo="CU3 · Una parrilla por día, por bloques horarios; se arma en borrador y se publica."
-      acciones={puede('insPar') && <Boton icono="plus" onClick={() => setNueva(true)}>Nueva parrilla</Boton>}>
+      acciones={puede('insPar') && <Boton icono="plus" onClick={() => setNueva(true)}>Nueva parrillaa</Boton>}>
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-48"><Campo etiqueta="Filtrar por mes" tipo="month" valor={mes} onChange={setMes} /></div>
         {mes && <Boton variante="fantasma" onClick={() => setMes('')}>Ver todas</Boton>}
@@ -116,49 +116,49 @@ export function ParrillaDetalle() {
             ? <Alerta tipo="exito" titulo="Contenido validado" mensajes="El Encargado de Contenidos dejó LISTOS todos los bloques: la parrilla ya se puede publicar." />
             : <Alerta tipo="aviso" titulo="Falta validar el contenido (CU5)" mensajes={`Para publicar, el Encargado de Contenidos debe revisar y dejar LISTOS todos los bloques: van ${v5.resumen.listos} de ${v5.resumen.total}.`} />)}
           <Tarjeta titulo={`Bloques (${p.bloques.length})`} acciones={p.editable && puede('insBlo') && <Boton tam="sm" icono="plus" onClick={() => setNuevoBloque(true)}>Agregar bloque</Boton>}>
-              {p.bloques.length === 0 ? <Vacio texto="La parrilla no tiene bloques. Agregue el primero." /> : (
-                <ol className="space-y-2">
-                  {p.bloques.map((b) => {
-                    const deNoticias = b.tipo === 'PROGRAMA' && PRENSA.includes(b.tipo_programa)
-                    const spots = p.spots.filter((s) => s.id_bloque === b.id)
-                    return (
-                      <li key={b.id} className={`rounded-tema border border-borde p-3 ${b.tipo === 'PAUSA_COMERCIAL' ? 'bg-superficie-2' : ''}`}>
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div className="flex items-start gap-3">
-                            <span className="rounded-tema bg-primario-tenue px-2 py-1 font-mono text-sm font-semibold text-primario">{hora(b.hora_inicio)}–{hora(b.hora_fin)}</span>
-                            <div>
-                              <p className="font-semibold">{b.tipo === 'PAUSA_COMERCIAL' ? 'Pausa comercial' : b.programa}
-                                <span className="ml-2 text-xs font-normal text-suave">{b.tipo_programa || b.tipo.replaceAll('_', ' ')} · {duracion(b.duracion_seg)}</span>
-                                {p.estado === 'PUBLICADA' && <span className="ml-2"><Insignia valor={b.estado_bloque} /></span>}
-                                {validacionDe[b.id] && <span className="ml-2"><Insignia valor={validacionDe[b.id]} /></span>}</p>
-                              {b.tipo === 'PROGRAMA' && (
-                                <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-                                  {b.notas > 0 ? <span>Escaleta de {b.notas} nota(s)</span>
-                                    : b.material ? <Link to={`/materiales/${b.material}`} className="text-primario underline">{b.titulo_material}</Link>
-                                      : <Insignia valor="SIN MATERIAL" />}
-                                </p>
-                              )}
-                              {b.cancelado && (
-                                <p className="mt-1 text-sm text-peligro"><b>Cancelado</b>{b.reemplazo && ` · en su lugar ${b.titulo_reemplazo}`}</p>
-                              )}
-                              {b.tipo === 'PAUSA_COMERCIAL' && (
-                                <p className="mt-1 text-sm text-suave">{spots.length ? `${spots.length} spot(s) · ${duracion(spots.reduce((t, s) => t + Number(s.duracion_seg), 0))} ocupados` : 'Sin spots'}</p>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {b.tipo === 'PAUSA_COMERCIAL' && <Boton tam="sm" variante="secundario" icono="list" onClick={() => setVerSpots(b)}>Ver spots ({spots.length})</Boton>}
-                            {deNoticias && puede('lisLea') && <Boton tam="sm" variante="secundario" icono="list" onClick={() => setEscaleta(b)}>Escaleta</Boton>}
-                            {b.tipo === 'PROGRAMA' && b.notas === 0 && puede('camBlo') && <Boton tam="sm" variante="secundario" icono="edit" onClick={() => setCambiar(b)}>Cambiar material</Boton>}
-                            {p.editable && puede('eliBlo') && <Boton tam="sm" variante="secundario" icono="trash" onClick={() => setQuitar(b)}>Quitar</Boton>}
+            {p.bloques.length === 0 ? <Vacio texto="La parrilla no tiene bloques. Agregue el primero." /> : (
+              <ol className="space-y-2">
+                {p.bloques.map((b) => {
+                  const deNoticias = b.tipo === 'PROGRAMA' && PRENSA.includes(b.tipo_programa)
+                  const spots = p.spots.filter((s) => s.id_bloque === b.id)
+                  return (
+                    <li key={b.id} className={`rounded-tema border border-borde p-3 ${b.tipo === 'PAUSA_COMERCIAL' ? 'bg-superficie-2' : ''}`}>
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex items-start gap-3">
+                          <span className="rounded-tema bg-primario-tenue px-2 py-1 font-mono text-sm font-semibold text-primario">{hora(b.hora_inicio)}–{hora(b.hora_fin)}</span>
+                          <div>
+                            <p className="font-semibold">{b.tipo === 'PAUSA_COMERCIAL' ? 'Pausa comercial' : b.programa}
+                              <span className="ml-2 text-xs font-normal text-suave">{b.tipo_programa || b.tipo.replaceAll('_', ' ')} · {duracion(b.duracion_seg)}</span>
+                              {p.estado === 'PUBLICADA' && <span className="ml-2"><Insignia valor={b.estado_bloque} /></span>}
+                              {validacionDe[b.id] && <span className="ml-2"><Insignia valor={validacionDe[b.id]} /></span>}</p>
+                            {b.tipo === 'PROGRAMA' && (
+                              <p className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+                                {b.notas > 0 ? <span>Escaleta de {b.notas} nota(s)</span>
+                                  : b.material ? <Link to={`/materiales/${b.material}`} className="text-primario underline">{b.titulo_material}</Link>
+                                    : <Insignia valor="SIN MATERIAL" />}
+                              </p>
+                            )}
+                            {b.cancelado && (
+                              <p className="mt-1 text-sm text-peligro"><b>Cancelado</b>{b.reemplazo && ` · en su lugar ${b.titulo_reemplazo}`}</p>
+                            )}
+                            {b.tipo === 'PAUSA_COMERCIAL' && (
+                              <p className="mt-1 text-sm text-suave">{spots.length ? `${spots.length} spot(s) · ${duracion(spots.reduce((t, s) => t + Number(s.duracion_seg), 0))} ocupados` : 'Sin spots'}</p>
+                            )}
                           </div>
                         </div>
-                      </li>
-                    )
-                  })}
-                </ol>
-              )}
-            </Tarjeta>
+                        <div className="flex flex-wrap gap-1">
+                          {b.tipo === 'PAUSA_COMERCIAL' && <Boton tam="sm" variante="secundario" icono="list" onClick={() => setVerSpots(b)}>Ver spots ({spots.length})</Boton>}
+                          {deNoticias && puede('lisLea') && <Boton tam="sm" variante="secundario" icono="list" onClick={() => setEscaleta(b)}>Escaleta</Boton>}
+                          {b.tipo === 'PROGRAMA' && b.notas === 0 && puede('camBlo') && <Boton tam="sm" variante="secundario" icono="edit" onClick={() => setCambiar(b)}>Cambiar material</Boton>}
+                          {p.editable && puede('eliBlo') && <Boton tam="sm" variante="secundario" icono="trash" onClick={() => setQuitar(b)}>Quitar</Boton>}
+                        </div>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
+          </Tarjeta>
         </>
       )}
 
@@ -167,16 +167,20 @@ export function ParrillaDetalle() {
         <Formulario textoBoton="Agregar bloque" onCancelar={() => setNuevoBloque(false)} inicial={{ hora_inicio: siguienteHora, tipo: 'PROGRAMA' }}
           campos={[
             { nombre: 'hora_inicio', etiqueta: 'Hora de inicio', tipo: 'time', requerido: true },
-            { nombre: 'hora_fin', etiqueta: 'Hora de fin', tipo: 'time', requerido: true,
+            {
+              nombre: 'hora_fin', etiqueta: 'Hora de fin', tipo: 'time', requerido: true,
               disabled: (v) => v.tipo === 'PROGRAMA' && !!v.material,
               ayuda: (v) => (v.tipo === 'PROGRAMA' && v.material ? 'Automática: hora de inicio + duración del material.'
                 : v.tipo === 'PAUSA_COMERCIAL' ? 'Elija la hora en que termina la pausa comercial.'
-                  : 'Elija la hora, o seleccione un material y se calcula sola.') },
+                  : 'Elija la hora, o seleccione un material y se calcula sola.')
+            },
             { nombre: 'tipo', etiqueta: 'Tipo de bloque', tipo: 'select', opciones: ['PROGRAMA', 'PAUSA_COMERCIAL'], requerido: true },
             { nombre: 'programa', etiqueta: 'Programa', tipo: 'select', opciones: programas, oculto: (v) => v.tipo !== 'PROGRAMA' },
-            { nombre: 'material', etiqueta: 'Material (opcional)', tipo: 'select', placeholder: '— Sin material (se asigna después o con escaleta) —',
+            {
+              nombre: 'material', etiqueta: 'Material (opcional)', tipo: 'select', placeholder: '— Sin material (se asigna después o con escaleta) —',
               oculto: (v) => v.tipo !== 'PROGRAMA',
-              opciones: (v) => materialesPara(v.programa).map(opcionMaterial) },
+              opciones: (v) => materialesPara(v.programa).map(opcionMaterial)
+            },
           ]}
           esquema={{
             hora_inicio: [r.requerido('La hora de inicio'), r.hora('La hora de inicio')],
@@ -202,8 +206,10 @@ export function ParrillaDetalle() {
       <Modal abierto={!!cambiar} titulo={`Cambiar material · ${cambiar ? hora(cambiar.hora_inicio) : ''} ${cambiar?.programa ?? ''}`} onCerrar={() => setCambiar(null)}>
         {cambiar && (
           <Formulario textoBoton="Cambiar material" onCancelar={() => setCambiar(null)}
-            campos={[{ nombre: 'material', etiqueta: 'Material nuevo', tipo: 'select', requerido: true, ancho: 'completo',
-              opciones: materialesPara(cambiar.programa).filter((m) => String(m.id) !== String(cambiar.material)).map(opcionMaterial) }]}
+            campos={[{
+              nombre: 'material', etiqueta: 'Material nuevo', tipo: 'select', requerido: true, ancho: 'completo',
+              opciones: materialesPara(cambiar.programa).filter((m) => String(m.id) !== String(cambiar.material)).map(opcionMaterial)
+            }]}
             esquema={{ material: [r.requerido('El material')] }}
             extra={() => p?.estado === 'PUBLICADA' && <Alerta tipo="aviso" mensajes="La parrilla está publicada: se avisará del cambio al Programador y al Encargado de Contenidos." />}
             onEnviar={async (v) => { tras(await put(`/parrillas/${fecha}/bloques/${cambiar.hora_inicio}/material`, v)); setCambiar(null) }} />
@@ -340,7 +346,7 @@ function VideosDelBloque({ videos }) {
       <div className="md:col-span-3">
         {v.video_url
           ? <video key={v.video_url} src={v.video_url} controls className="aspect-video w-full rounded-tema bg-black"
-              onEnded={() => actual < videos.length - 1 && setActual(actual + 1)} />
+            onEnded={() => actual < videos.length - 1 && setActual(actual + 1)} />
           : <div className="grid aspect-video w-full place-items-center rounded-tema bg-superficie-2 text-sm text-suave">El material {v.titulo} no tiene su video cargado.</div>}
         <p className="mt-2 text-sm"><b>{v.titulo}</b> <span className="text-suave">({v.hora}–{v.hora_fin})</span></p>
         {videos.length > 1 && <p className="text-xs text-suave">Video {actual + 1} de {videos.length}. Al terminar pasa al siguiente.</p>}
@@ -390,43 +396,51 @@ export function Validacion() {
           <Tabla filtrable={false} titulo="Bloques" vacio="La parrilla no tiene bloques." filas={d.bloques} columnas={[
             { clave: 'hora_inicio', titulo: 'Horario', render: (b) => <span className="font-mono">{hora(b.hora_inicio)}–{hora(b.hora_fin)}</span> },
             { clave: 'nombre', titulo: 'Bloque', render: (b) => <span className="font-semibold">{b.nombre}</span> },
-            { clave: 'estado_bloque', titulo: 'Estado', render: (b) => (
-              <div className="space-y-1">
-                <Insignia valor={b.estado_bloque} />
-                {b.cancelacion && (
-                  <div className="text-sm">
-                    {b.cancelacion.reemplazo && (
-                      <p><b>En su lugar:</b> {b.cancelacion.titulo_reemplazo}
-                        {b.cancelacion.reemplazo_video_url && <a href={b.cancelacion.reemplazo_video_url} target="_blank" rel="noreferrer" className="ml-1 text-primario underline">ver video</a>}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) },
-            { clave: 'contenido', titulo: 'Contenido', render: (b) => (
-              <div className="text-sm">
-                <p>{b.contenido}</p>
-                {b.videos.length > 0 && <p className="text-xs text-suave">{b.videos.map((x) => x.titulo).join(', ')}</p>}
-              </div>
-            ) },
-            { clave: 'estado', titulo: 'Validación', render: (b) => (
-              <div className="space-y-1">
-                <Insignia valor={b.estado} />
-                {b.observacion && <p className="text-sm">{b.observacion}</p>}
-                {b.validado_por && <p className="text-xs text-suave">Validó: {b.validado_por}</p>}
-              </div>
-            ) },
-            { clave: 'acc', titulo: 'Acciones', render: (b) => (
-              <div className="flex flex-wrap gap-1">
-                {b.editable && !validado(b) && puede('insVal')
-                  ? <Boton tam="sm" icono="check" onClick={() => setValidar(b)}>Revisar y validar</Boton>
-                  : <Boton tam="sm" variante="secundario" icono="film" onClick={() => setValidar(b)}>{b.editable && puede('modVal') ? 'Revisar / modificar' : 'Ver videos'}</Boton>}
-                {b.editable && validado(b) && puede('eliVal') && <Boton tam="sm" variante="secundario" icono="trash" onClick={() => setAnular(b)}>Anular</Boton>}
-                {b.puede_cancelar && puede('canBlo') && <Boton tam="sm" variante="peligro" icono="x" onClick={() => setCancelar(b)}>Cancelar</Boton>}
-                {b.puede_reanudar && puede('reaBlo') && <Boton tam="sm" variante="secundario" icono="play" onClick={() => setReanudar(b)}>Reanudar</Boton>}
-                {!b.editable && <span className="w-full text-xs text-suave">{b.bloqueo}: ya no se valida</span>}
-              </div>
-            ) },
+            {
+              clave: 'estado_bloque', titulo: 'Estado', render: (b) => (
+                <div className="space-y-1">
+                  <Insignia valor={b.estado_bloque} />
+                  {b.cancelacion && (
+                    <div className="text-sm">
+                      {b.cancelacion.reemplazo && (
+                        <p><b>En su lugar:</b> {b.cancelacion.titulo_reemplazo}
+                          {b.cancelacion.reemplazo_video_url && <a href={b.cancelacion.reemplazo_video_url} target="_blank" rel="noreferrer" className="ml-1 text-primario underline">ver video</a>}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            },
+            {
+              clave: 'contenido', titulo: 'Contenido', render: (b) => (
+                <div className="text-sm">
+                  <p>{b.contenido}</p>
+                  {b.videos.length > 0 && <p className="text-xs text-suave">{b.videos.map((x) => x.titulo).join(', ')}</p>}
+                </div>
+              )
+            },
+            {
+              clave: 'estado', titulo: 'Validación', render: (b) => (
+                <div className="space-y-1">
+                  <Insignia valor={b.estado} />
+                  {b.observacion && <p className="text-sm">{b.observacion}</p>}
+                  {b.validado_por && <p className="text-xs text-suave">Validó: {b.validado_por}</p>}
+                </div>
+              )
+            },
+            {
+              clave: 'acc', titulo: 'Acciones', render: (b) => (
+                <div className="flex flex-wrap gap-1">
+                  {b.editable && !validado(b) && puede('insVal')
+                    ? <Boton tam="sm" icono="check" onClick={() => setValidar(b)}>Revisar y validar</Boton>
+                    : <Boton tam="sm" variante="secundario" icono="film" onClick={() => setValidar(b)}>{b.editable && puede('modVal') ? 'Revisar / modificar' : 'Ver videos'}</Boton>}
+                  {b.editable && validado(b) && puede('eliVal') && <Boton tam="sm" variante="secundario" icono="trash" onClick={() => setAnular(b)}>Anular</Boton>}
+                  {b.puede_cancelar && puede('canBlo') && <Boton tam="sm" variante="peligro" icono="x" onClick={() => setCancelar(b)}>Cancelar</Boton>}
+                  {b.puede_reanudar && puede('reaBlo') && <Boton tam="sm" variante="secundario" icono="play" onClick={() => setReanudar(b)}>Reanudar</Boton>}
+                  {!b.editable && <span className="w-full text-xs text-suave">{b.bloqueo}: ya no se valida</span>}
+                </div>
+              )
+            },
           ]} />
         </>
       )}
@@ -442,21 +456,25 @@ export function Validacion() {
                 <Boton variante="secundario" onClick={() => setValidar(null)}>Cerrar</Boton>
               </div>
             ) : (
-          <div className="border-t border-borde pt-3">
-          <Formulario textoBoton={nuevo ? 'Registrar validación' : 'Guardar cambios'} onCancelar={() => setValidar(null)}
-            inicial={nuevo
-              ? { estado: validar.problemas.length ? 'OBSERVADO' : 'LISTO', observacion: validar.problemas.join(' ') }
-              : { estado: validar.estado, observacion: validar.observacion }}
-            campos={[
-              { nombre: 'estado', etiqueta: 'Estado de emisión', tipo: 'select', requerido: true, ancho: 'completo',
-                opciones: validar.problemas.length ? ['OBSERVADO'] : ['LISTO', 'OBSERVADO'] },
-              { nombre: 'observacion', etiqueta: 'Observación', tipo: 'textarea', ayuda: 'Obligatoria si el bloque queda OBSERVADO: indique qué falta o qué está mal.' },
-            ]}
-            esquema={{ estado: [r.requerido('El estado')],
-              observacion: [r.max(255, 'La observación'), (v, c) => (c.estado === 'OBSERVADO' && !String(v ?? '').trim() ? 'Al observar un bloque, la observación es obligatoria.' : null)] }}
-            extra={() => validar.problemas.length > 0 && <Alerta tipo="aviso" titulo="No puede quedar LISTO" mensajes={validar.problemas} />}
-            onEnviar={async (v) => { listo(nuevo ? await post(url(validar), v) : await put(url(validar), v)); setValidar(null) }} />
-          </div>
+              <div className="border-t border-borde pt-3">
+                <Formulario textoBoton={nuevo ? 'Registrar validación' : 'Guardar cambios'} onCancelar={() => setValidar(null)}
+                  inicial={nuevo
+                    ? { estado: validar.problemas.length ? 'OBSERVADO' : 'LISTO', observacion: validar.problemas.join(' ') }
+                    : { estado: validar.estado, observacion: validar.observacion }}
+                  campos={[
+                    {
+                      nombre: 'estado', etiqueta: 'Estado de emisión', tipo: 'select', requerido: true, ancho: 'completo',
+                      opciones: validar.problemas.length ? ['OBSERVADO'] : ['LISTO', 'OBSERVADO']
+                    },
+                    { nombre: 'observacion', etiqueta: 'Observación', tipo: 'textarea', ayuda: 'Obligatoria si el bloque queda OBSERVADO: indique qué falta o qué está mal.' },
+                  ]}
+                  esquema={{
+                    estado: [r.requerido('El estado')],
+                    observacion: [r.max(255, 'La observación'), (v, c) => (c.estado === 'OBSERVADO' && !String(v ?? '').trim() ? 'Al observar un bloque, la observación es obligatoria.' : null)]
+                  }}
+                  extra={() => validar.problemas.length > 0 && <Alerta tipo="aviso" titulo="No puede quedar LISTO" mensajes={validar.problemas} />}
+                  onEnviar={async (v) => { listo(nuevo ? await post(url(validar), v) : await put(url(validar), v)); setValidar(null) }} />
+              </div>
             )}
           </div>
         )}
@@ -466,8 +484,10 @@ export function Validacion() {
         {cancelar && (
           <Formulario textoBoton="Cancelar bloque" onCancelar={() => setCancelar(null)} inicial={{ reemplazo: '' }}
             campos={cancelar.tipo === 'PAUSA_COMERCIAL' ? [] : [
-              { nombre: 'reemplazo', etiqueta: 'Qué sale en su lugar (opcional)', tipo: 'select', ancho: 'completo', placeholder: '— Nada / se transmite en vivo —',
-                opciones: reemplazos(cancelar).map(opcionMaterial) },
+              {
+                nombre: 'reemplazo', etiqueta: 'Qué sale en su lugar (opcional)', tipo: 'select', ancho: 'completo', placeholder: '— Nada / se transmite en vivo —',
+                opciones: reemplazos(cancelar).map(opcionMaterial)
+              },
             ]}
             extra={() => <Alerta tipo="aviso" mensajes="El bloque queda CANCELADO y su video pasa a ser el de reemplazo (o ninguno). En la conciliación (CU7) solo puede registrarse como NO EMITIDO. Se avisa al Programador. Mientras el bloque no termine se puede reanudar: vuelve con el video que tenga asignado." />}
             onEnviar={async (v) => { listo(await post(urlCancelacion(cancelar), v)); setCancelar(null) }} />
@@ -538,12 +558,14 @@ export function Emision() {
   const puedeSalir = (b) => b.validacion === 'LISTO' && !b.cancelado
   const motivo = (b) => (!publicada ? 'Parrilla sin publicar' : !b.empezo ? 'Aún no sale al aire' : null)
 
-  const abrir = (b) => setEditando((e) => ({ ...e, [b.id]: {
-    inicio: (b.inicio_real || b.hora_inicio).slice(0, 5),
-    fin: (b.fin_real || b.hora_fin).slice(0, 5),
-    estado: b.registrada ? b.estado : (puedeSalir(b) ? 'EMITIDO' : 'NO_EMITIDO'),
-    nota: b.observacion || (b.cancelado ? 'Bloque cancelado' : ''),
-  } }))
+  const abrir = (b) => setEditando((e) => ({
+    ...e, [b.id]: {
+      inicio: (b.inicio_real || b.hora_inicio).slice(0, 5),
+      fin: (b.fin_real || b.hora_fin).slice(0, 5),
+      estado: b.registrada ? b.estado : (puedeSalir(b) ? 'EMITIDO' : 'NO_EMITIDO'),
+      nota: b.observacion || (b.cancelado ? 'Bloque cancelado' : ''),
+    }
+  }))
   const cerrar = (id) => { setEditando((e) => { const n = { ...e }; delete n[id]; return n }); setErrores((e) => ({ ...e, [id]: null })) }
   const cambiar = (id, campo, valor) => setEditando((e) => ({ ...e, [id]: { ...e[id], [campo]: valor } }))
 
@@ -583,75 +605,89 @@ export function Emision() {
         <>
           {!publicada && <Alerta tipo="aviso" mensajes="Esta parrilla sigue en BORRADOR: publíquela primero; solo se concilian parrillas publicadas." />}
           <Tabla filtrable={false} titulo="Planificado contra transmitido" filas={c.bloques} columnas={[
-            { clave: 'programa', titulo: 'Bloque', render: (b) => (
-              <span><span className="font-semibold">{b.programa || 'Pausa comercial'}</span>
-                {b.cancelado && <span className="block text-xs text-peligro">Cancelado</span>}
-                {!b.cancelado && b.validacion !== 'LISTO' && <span className="block text-xs text-suave">No validado (CU5)</span>}</span>
-            ) },
-            { clave: 'hora_inicio', titulo: 'Planificado', render: (b) => (
-              <span className="font-mono text-sm">{hora(b.hora_inicio)} – {hora(b.hora_fin)}
-                <span className="block font-sans text-xs text-suave">{lapso(aSeg(b.hora_fin) - aSeg(b.hora_inicio))}</span></span>
-            ) },
-            { clave: 'inicio_real', titulo: 'Transmitido', render: (b) => {
-              const x = editando[b.id]
-              if (x) {
-                return x.estado === 'NO_EMITIDO' ? <span className="text-sm text-suave">—</span> : (
-                  <span className="flex items-center gap-1">
-                    <input type="time" aria-label="Inicio real" value={x.inicio} onChange={(e) => cambiar(b.id, 'inicio', e.target.value)} className={`${campo} font-mono`} />
-                    <span>–</span>
-                    <input type="time" aria-label="Fin real" value={x.fin} onChange={(e) => cambiar(b.id, 'fin', e.target.value)} className={`${campo} font-mono`} />
+            {
+              clave: 'programa', titulo: 'Bloque', render: (b) => (
+                <span><span className="font-semibold">{b.programa || 'Pausa comercial'}</span>
+                  {b.cancelado && <span className="block text-xs text-peligro">Cancelado</span>}
+                  {!b.cancelado && b.validacion !== 'LISTO' && <span className="block text-xs text-suave">No validado (CU5)</span>}</span>
+              )
+            },
+            {
+              clave: 'hora_inicio', titulo: 'Planificado', render: (b) => (
+                <span className="font-mono text-sm">{hora(b.hora_inicio)} – {hora(b.hora_fin)}
+                  <span className="block font-sans text-xs text-suave">{lapso(aSeg(b.hora_fin) - aSeg(b.hora_inicio))}</span></span>
+              )
+            },
+            {
+              clave: 'inicio_real', titulo: 'Transmitido', render: (b) => {
+                const x = editando[b.id]
+                if (x) {
+                  return x.estado === 'NO_EMITIDO' ? <span className="text-sm text-suave">—</span> : (
+                    <span className="flex items-center gap-1">
+                      <input type="time" aria-label="Inicio real" value={x.inicio} onChange={(e) => cambiar(b.id, 'inicio', e.target.value)} className={`${campo} font-mono`} />
+                      <span>–</span>
+                      <input type="time" aria-label="Fin real" value={x.fin} onChange={(e) => cambiar(b.id, 'fin', e.target.value)} className={`${campo} font-mono`} />
+                    </span>
+                  )
+                }
+                return b.inicio_real ? <span className="font-mono text-sm">{hora(b.inicio_real)} – {hora(b.fin_real)}</span> : <span className="text-sm text-suave">—</span>
+              }
+            },
+            {
+              clave: 'diferencia', titulo: 'Diferencia', render: (b) => {
+                const x = editando[b.id]
+                if (x) return <Diferencia b={b} inicio={x.inicio} fin={x.fin} estado={x.estado} />
+                return b.registrada ? <Diferencia b={b} inicio={b.inicio_real} fin={b.fin_real} estado={b.estado} guardado /> : <span className="text-sm text-suave">—</span>
+              }
+            },
+            {
+              clave: 'estado', titulo: 'Resultado', render: (b) => {
+                const x = editando[b.id]
+                if (!x) return <Insignia valor={b.estado} />
+                return (
+                  <select aria-label="Resultado" value={x.estado} onChange={(e) => cambiar(b.id, 'estado', e.target.value)} className={campo}>
+                    {(puedeSalir(b) ? ['EMITIDO', 'PARCIAL', 'NO_EMITIDO'] : ['NO_EMITIDO']).map((v) => <option key={v} value={v}>{RESULTADOS[v]}</option>)}
+                  </select>
+                )
+              }
+            },
+            {
+              clave: 'observacion', titulo: 'Nota', render: (b) => {
+                const x = editando[b.id]
+                if (!x) return <span className="text-sm">{b.observacion || <span className="text-suave">—</span>}</span>
+                return (
+                  <span className="block">
+                    <input type="text" maxLength={255} aria-label="Nota" value={x.nota} onChange={(e) => cambiar(b.id, 'nota', e.target.value)}
+                      placeholder={x.estado === 'EMITIDO' ? 'Opcional' : 'Obligatoria: qué pasó'} className={`${campo} w-full min-w-40`} />
+                    {errores[b.id] && <span className="mt-1 block text-xs text-peligro">{errores[b.id]}</span>}
                   </span>
                 )
               }
-              return b.inicio_real ? <span className="font-mono text-sm">{hora(b.inicio_real)} – {hora(b.fin_real)}</span> : <span className="text-sm text-suave">—</span>
-            } },
-            { clave: 'diferencia', titulo: 'Diferencia', render: (b) => {
-              const x = editando[b.id]
-              if (x) return <Diferencia b={b} inicio={x.inicio} fin={x.fin} estado={x.estado} />
-              return b.registrada ? <Diferencia b={b} inicio={b.inicio_real} fin={b.fin_real} estado={b.estado} guardado /> : <span className="text-sm text-suave">—</span>
-            } },
-            { clave: 'estado', titulo: 'Resultado', render: (b) => {
-              const x = editando[b.id]
-              if (!x) return <Insignia valor={b.estado} />
-              return (
-                <select aria-label="Resultado" value={x.estado} onChange={(e) => cambiar(b.id, 'estado', e.target.value)} className={campo}>
-                  {(puedeSalir(b) ? ['EMITIDO', 'PARCIAL', 'NO_EMITIDO'] : ['NO_EMITIDO']).map((v) => <option key={v} value={v}>{RESULTADOS[v]}</option>)}
-                </select>
-              )
-            } },
-            { clave: 'observacion', titulo: 'Nota', render: (b) => {
-              const x = editando[b.id]
-              if (!x) return <span className="text-sm">{b.observacion || <span className="text-suave">—</span>}</span>
-              return (
-                <span className="block">
-                  <input type="text" maxLength={255} aria-label="Nota" value={x.nota} onChange={(e) => cambiar(b.id, 'nota', e.target.value)}
-                    placeholder={x.estado === 'EMITIDO' ? 'Opcional' : 'Obligatoria: qué pasó'} className={`${campo} w-full min-w-40`} />
-                  {errores[b.id] && <span className="mt-1 block text-xs text-peligro">{errores[b.id]}</span>}
-                </span>
-              )
-            } },
-            { clave: 'acc', titulo: '', render: (b) => {
-              const x = editando[b.id]
-              const m = motivo(b)
-              return (
-                <div className="flex flex-wrap items-center gap-1">
-                  {x ? (
-                    <>
-                      <Boton tam="sm" icono="check" cargando={guardando === b.id} onClick={() => guardar(b)}>Guardar</Boton>
-                      <Boton tam="sm" variante="fantasma" onClick={() => cerrar(b.id)}>Cancelar</Boton>
-                    </>
-                  ) : (
-                    <>
-                      {m && !b.registrada && <span className="text-xs text-suave">{m}</span>}
-                      {!m && !b.registrada && puede('insEmi') && <Boton tam="sm" icono="radio" onClick={() => abrir(b)}>Conciliar</Boton>}
-                      {b.registrada && puede('modEmi') && <Boton tam="sm" variante="secundario" icono="edit" onClick={() => abrir(b)}>Corregir</Boton>}
-                      {b.registrada && puede('eliEmi') && <Boton tam="sm" variante="fantasma" icono="trash" onClick={() => setEliminar(b)}>Deshacer</Boton>}
-                      {b.tipo === 'PAUSA_COMERCIAL' && <Boton tam="sm" variante="secundario" icono="list" onClick={() => { setErrSpot(null); setVerSpots(b) }}>Spots ({spotsDe(b).length})</Boton>}
-                    </>
-                  )}
-                </div>
-              )
-            } },
+            },
+            {
+              clave: 'acc', titulo: '', render: (b) => {
+                const x = editando[b.id]
+                const m = motivo(b)
+                return (
+                  <div className="flex flex-wrap items-center gap-1">
+                    {x ? (
+                      <>
+                        <Boton tam="sm" icono="check" cargando={guardando === b.id} onClick={() => guardar(b)}>Guardar</Boton>
+                        <Boton tam="sm" variante="fantasma" onClick={() => cerrar(b.id)}>Cancelar</Boton>
+                      </>
+                    ) : (
+                      <>
+                        {m && !b.registrada && <span className="text-xs text-suave">{m}</span>}
+                        {!m && !b.registrada && puede('insEmi') && <Boton tam="sm" icono="radio" onClick={() => abrir(b)}>Conciliar</Boton>}
+                        {b.registrada && puede('modEmi') && <Boton tam="sm" variante="secundario" icono="edit" onClick={() => abrir(b)}>Corregir</Boton>}
+                        {b.registrada && puede('eliEmi') && <Boton tam="sm" variante="fantasma" icono="trash" onClick={() => setEliminar(b)}>Deshacer</Boton>}
+                        {b.tipo === 'PAUSA_COMERCIAL' && <Boton tam="sm" variante="secundario" icono="list" onClick={() => { setErrSpot(null); setVerSpots(b) }}>Spots ({spotsDe(b).length})</Boton>}
+                      </>
+                    )}
+                  </div>
+                )
+              }
+            },
           ]} />
         </>
       )}
@@ -666,9 +702,11 @@ export function Emision() {
               { clave: 'titulo', titulo: 'Spot', render: (s) => <Link to={`/materiales/${s.material}`} className="text-primario underline">{s.titulo}</Link> },
               { clave: 'pauta', titulo: 'Anunciante', render: (s) => <span>{s.anunciante}<span className="block text-xs text-suave">{s.pauta}</span></span> },
               { clave: 'estado', titulo: '¿Salió al aire?', render: (s) => <Insignia valor={s.estado} /> },
-              { clave: 'acc', titulo: '', render: (s) => pausa.registrada && puede('modSpo') && (s.estado === 'EMITIDO'
-                ? <Boton tam="sm" variante="secundario" icono="x" onClick={() => marcarSpot(s, 'NO_EMITIDO')}>No salió</Boton>
-                : <Boton tam="sm" variante="secundario" icono="check" onClick={() => marcarSpot(s, 'EMITIDO')}>Salió</Boton>) },
+              {
+                clave: 'acc', titulo: '', render: (s) => pausa.registrada && puede('modSpo') && (s.estado === 'EMITIDO'
+                  ? <Boton tam="sm" variante="secundario" icono="x" onClick={() => marcarSpot(s, 'NO_EMITIDO')}>No salió</Boton>
+                  : <Boton tam="sm" variante="secundario" icono="check" onClick={() => marcarSpot(s, 'EMITIDO')}>Salió</Boton>)
+              },
             ]} />
             <div className="flex justify-end"><Boton variante="secundario" onClick={() => setVerSpots(null)}>Cerrar</Boton></div>
           </div>

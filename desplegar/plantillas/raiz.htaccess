@@ -1,0 +1,17 @@
+# Canal 11 en el servidor del curso: la API (/api/... y /up) la atiende Laravel (index.php);
+# cualquier otra ruta que no sea un archivo real es una pantalla de la app React (index.html).
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # El token de sesion (Authorization: Bearer ...) llega a PHP
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    RewriteRule ^(api(/.*)?|up)$ index.php [L,QSA]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.html [L]
+</IfModule>

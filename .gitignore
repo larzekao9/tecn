@@ -1,0 +1,32 @@
+config.properties
+out/
+salida/
+*.class
+.idea/
+.vscode/
+*.iml
+.DS_Store
+logs/
+docs/
+README.md
+
+# --- Version web (3 capas) ---
+# CAPA 1 - Presentacion (cliente React)
+capa1-presentacion/node_modules/
+capa1-presentacion/dist/
+# CAPA 2 - Logica de negocio (servidor Laravel)
+capa2-negocio/vendor/
+capa2-negocio/.env
+capa2-negocio/storage/*.key
+capa2-negocio/storage/logs/*.log
+capa2-negocio/storage/framework/cache/data/
+capa2-negocio/storage/framework/sessions/
+capa2-negocio/storage/framework/views/*.php
+# Videos subidos desde la web (se guardan en el proyecto pero no van al repo)
+capa2-negocio/storage/app/private/videos/
+
+# --- Solo codigo en el repo: diagramas, documentos y scripts sueltos quedan en la PC ---
+diagramas/
+capa1-presentacion/imagenes/
+/*.md
+/*.py

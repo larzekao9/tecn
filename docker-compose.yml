@@ -1,0 +1,88 @@
+# Canal 11 - Sistema web de 3 capas
+#   carpeta capa1-presentacion/ -> CAPA 1: Presentacion (Cliente)       React SPA (Vite + Tailwind)  -> servicio web
+#   carpeta capa2-negocio/      -> CAPA 2: Logica de Negocio (Servidor) Laravel (API RESTful)        -> servicios api + scheduler
+#   servicio db                 -> CAPA 3: Persistencia (Base de Datos) PostgreSQL 16 (esquema canal11, triggers y contadores)
+#
+# Uso:  docker compose up --build        (la primera vez tarda: instala dependencias)
+# Puertos, base de datos y zona horaria: archivo .env de esta carpeta.
+name: canal11-3capas
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NOMBRE}
+      POSTGRES_USER: ${DB_USUARIO}
+      POSTGRES_PASSWORD: ${DB_CLAVE}
+      TZ: ${ZONA_HORARIA}
+      PGTZ: ${ZONA_HORARIA}
+    ports:
+      - "${DB_PUERTO_HOST}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USUARIO} -d ${DB_NOMBRE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: ./capa2-negocio
+    image: canal11-api:dev
+    restart: unless-stopped
+    command: serve
+    depends_on:
+      db:
+        condition: service_healthy
+    environment: &api-env
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:${API_PUERTO}
+      APP_TIMEZONE: ${ZONA_HORARIA}
+      API_PUERTO: ${API_PUERTO}
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_NOMBRE}
+      DB_USERNAME: ${DB_USUARIO}
+      DB_PASSWORD: ${DB_CLAVE}
+      DB_SCHEMA: canal11
+      SEMBRAR_DEMO: "true"
+    ports:
+      - "${API_PUERTO}:${API_PUERTO}"
+    volumes:
+      - ./capa2-negocio:/var/www
+      - api-vendor:/var/www/vendor
+
+  scheduler:
+    image: canal11-api:dev
+    restart: unless-stopped
+    command: scheduler
+    depends_on:
+      - api
+    environment: *api-env
+    volumes:
+      - ./capa2-negocio:/var/www
+      - api-vendor:/var/www/vendor
+
+  web:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    environment:
+      API_URL: http://api:${API_PUERTO}
+      WEB_PUERTO: ${WEB_PUERTO}
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PUERTO}:${WEB_PUERTO}"
+    volumes:
+      - ./capa1-presentacion:/app
+      - web-modules:/app/node_modules
+
+volumes:
+  pgdata:
+  api-vendor:
+  web-modules:

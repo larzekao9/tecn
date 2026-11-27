@@ -24,6 +24,14 @@ if (!is_file($archivo) || $zip->open($archivo) !== true) {
     exit("No se pudo abrir canal11.zip\n");
 }
 $total = $zip->numFiles;
+// los archivos del front compilado cambian de nombre en cada version: se borran los de la anterior
+if (is_dir(__DIR__ . '/assets')) {
+    $viejos = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__ . '/assets', FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST);
+    foreach ($viejos as $f) {
+        $f->isDir() ? @rmdir($f->getPathname()) : @unlink($f->getPathname());
+    }
+}
 if (!$zip->extractTo(__DIR__)) {
     exit("Fallo al descomprimir\n");
 }

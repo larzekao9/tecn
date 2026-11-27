@@ -1,0 +1,121 @@
+# Despliegue continuo: cada push a main compila el frontend (React) y el backend (Laravel) y los sube al
+# servidor del curso (tecnoweb) por FTP como un solo zip, que descomprimir.php abre alla; luego instalar.php
+# migra y siembra la BD. La configuracion del servidor (laravel/.env) ya esta en el servidor y no se toca.
+#
+# Configuracion en GitHub (Settings > Secrets and variables > Actions):
+#   variables: FTP_HOST, FTP_USUARIO, FTP_CARPETA (ej. /canal11), SITIO_URL (ej. https://www.tecnoweb.org.bo),
+#              WEB_BASE (ruta de la app en el sitio, ej. /inf513/grupo12sa/canal11/)
+#   secreto:   FTP_CLAVE
+name: Desplegar en tecnoweb
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: desplegar-tecnoweb
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FTP_HOST: ${{ vars.FTP_HOST }}
+      FTP_USUARIO: ${{ vars.FTP_USUARIO }}
+      FTP_CARPETA: ${{ vars.FTP_CARPETA }}
+      SITIO_URL: ${{ vars.SITIO_URL }}
+      WEB_BASE: ${{ vars.WEB_BASE }}
+      FTP_CLAVE: ${{ secrets.FTP_CLAVE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar configuracion
+        run: |
+          for v in FTP_HOST FTP_USUARIO FTP_CARPETA SITIO_URL WEB_BASE FTP_CLAVE; do
+            [ -n "${!v}" ] || { echo "Falta la variable o secreto $v en GitHub"; exit 1; }
+          done
+
+      # ---------- Capa 1: frontend ----------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: capa1-presentacion/package-lock.json
+      - name: Compilar frontend
+        working-directory: capa1-presentacion
+        run: |
+          npm ci --no-audit --no-fund
+          npx vite build --outDir "$RUNNER_TEMP/web" --emptyOutDir
+
+      # ---------- Capa 2: backend ----------
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, zip, mbstring
+          tools: composer:v2
+          coverage: none
+      - name: Preparar backend (sin dependencias de desarrollo, videos, logs ni .env)
+        run: |
+          L="$RUNNER_TEMP/web/laravel"
+          mkdir -p "$L"
+          rsync -a capa2-negocio/ "$L/" \
+            --exclude vendor --exclude node_modules --exclude tests --exclude docker --exclude public \
+            --exclude 'storage/app/private/videos' --exclude 'storage/logs' --exclude 'storage/framework' \
+            --exclude '.env' --exclude '.env.example' --exclude '.env.backup' --exclude Dockerfile \
+            --exclude '*.log' --exclude 'bootstrap/cache/*.php'
+          mkdir -p "$L/storage/app/private/videos" "$L/storage/logs" "$L/storage/framework/cache/data" \
+                   "$L/storage/framework/sessions" "$L/storage/framework/views" "$L/storage/framework/testing"
+          cd "$L"
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+          cd -
+          cp desplegar/plantillas/index.php "$RUNNER_TEMP/web/index.php"
+          cp desplegar/plantillas/raiz.htaccess "$RUNNER_TEMP/web/.htaccess"
+          cp desplegar/plantillas/laravel.htaccess "$L/.htaccess"
+
+      - name: Empaquetar
+        run: |
+          cd "$RUNNER_TEMP/web"
+          zip -qr "$RUNNER_TEMP/canal11.zip" .
+          CLAVE=$(openssl rand -hex 16)
+          echo "::add-mask::$CLAVE"
+          echo "CLAVE=$CLAVE" >> "$GITHUB_ENV"
+          for f in descomprimir.php instalar.php; do
+            sed "s/__CLAVE__/$CLAVE/" "$GITHUB_WORKSPACE/desplegar/plantillas/$f" > "$RUNNER_TEMP/$f"
+          done
+          ls -lh "$RUNNER_TEMP/canal11.zip"
+
+      # ---------- Subida y puesta en marcha ----------
+      - name: Subir por FTP
+        run: |
+          FTP="ftp://$FTP_HOST/${FTP_CARPETA#/}"
+          for f in canal11.zip descomprimir.php instalar.php; do
+            echo "subiendo $f"
+            curl -sS --fail --retry 3 --ftp-create-dirs --ftp-pasv --user "$FTP_USUARIO:$FTP_CLAVE" \
+              -T "$RUNNER_TEMP/$f" "${FTP%/}/$f"
+          done
+
+      - name: Descomprimir en el servidor
+        run: |
+          URL="${SITIO_URL%/}/${WEB_BASE#/}"
+          curl -sS -L --fail --max-time 900 "${URL%/}/descomprimir.php?clave=$CLAVE" | tee salida.txt
+          grep -q 'Descomprimidos' salida.txt
+
+      - name: Migrar y sembrar la base de datos
+        run: |
+          URL="${SITIO_URL%/}/${WEB_BASE#/}"
+          curl -sS -L --fail --max-time 900 "${URL%/}/instalar.php?clave=$CLAVE" | tee salida.txt
+          grep -q 'Base de datos lista' salida.txt
+
+      - name: Comprobar que responde
+        run: |
+          URL="${SITIO_URL%/}/${WEB_BASE#/}"
+          for ruta in "" "up"; do
+            codigo=$(curl -sS -L -o /dev/null -w '%{http_code}' "${URL%/}/$ruta")
+            echo "$codigo ${URL%/}/$ruta"
+            [ "$codigo" = 200 ] || exit 1
+          done
+          codigo=$(curl -sS -L -o /dev/null -w '%{http_code}' "${URL%/}/laravel/.env")
+          echo "$codigo ${URL%/}/laravel/.env (debe ser 403)"
+          [ "$codigo" = 403 ] || exit 1

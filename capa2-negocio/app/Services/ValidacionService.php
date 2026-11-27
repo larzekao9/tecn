@@ -23,7 +23,7 @@ use App\Support\Validador;
  *        llenen: el minimo establecido es la duracion de la pausa (sin aire vacio).
  *  - insVal: en bloques que no empezaron y sin emision registrada (en BORRADOR, o en PUBLICADA si un cambio anulo
  *    la validacion). LISTO exige que la verificacion no tenga problemas; OBSERVADO exige la observacion (el motivo).
- *  - La validacion se guarda en el propio bloque (usuario valida bloque): estado_validacion, observacion y validado_por.
+ *  - La validacion se guarda en el propio bloque (usuario valida bloque): estado_validacion, observacion e id_usuario (quien lo valido).
  *  - modVal cambia una validacion existente; eliVal la anula (el bloque vuelve a PENDIENTE).
  *  - Si cambia el contenido del bloque (material, escaleta o spots), un trigger lo deja PENDIENTE.
  *  - Un bloque OBSERVADO se avisa al Administrador y al Programador; la parrilla completa LISTA se avisa al Administrador.
@@ -64,7 +64,7 @@ class ValidacionService
         }
         $this->exigirCoherencia($b, $estado);
         // usuario valida bloque
-        Bd::ejecutar('UPDATE bloque SET estado_validacion = ?, observacion = ?, validado_por = ? WHERE id_bloque = ?',
+        Bd::ejecutar('UPDATE bloque SET estado_validacion = ?, observacion = ?, id_usuario = ? WHERE id_bloque = ?',
             [$estado, $observacion, $quien->id_usuario, $b['id']]);
         $this->bitacora->accion($quien, BitacoraService::VALIDAR, 'bloque');
         return $this->despues($quien, $fecha, $b, $estado, $observacion, 'Bloque validado');
@@ -78,7 +78,7 @@ class ValidacionService
             throw new NegocioException('El bloque de las <b>' . Validador::corta($b['hora_inicio']) . '</b> todavía no está validado: use Validar.');
         }
         $this->exigirCoherencia($b, $estado);
-        Bd::ejecutar('UPDATE bloque SET estado_validacion = ?, observacion = ?, validado_por = ? WHERE id_bloque = ?',
+        Bd::ejecutar('UPDATE bloque SET estado_validacion = ?, observacion = ?, id_usuario = ? WHERE id_bloque = ?',
             [$estado, $observacion, $quien->id_usuario, $b['id']]);
         $this->bitacora->accion($quien, BitacoraService::MODIFICAR, 'bloque');
         return $this->despues($quien, $fecha, $b, $estado, $observacion, 'Validación modificada');
@@ -95,7 +95,7 @@ class ValidacionService
         if ($b['estado'] === self::SIN_VALIDAR) {
             throw new NegocioException('El bloque de las <b>' . Validador::corta($hora) . '</b> no tiene una validación que anular.');
         }
-        Bd::ejecutar("UPDATE bloque SET estado_validacion = 'PENDIENTE', observacion = NULL, validado_por = NULL WHERE id_bloque = ?", [$b['id']]);
+        Bd::ejecutar("UPDATE bloque SET estado_validacion = 'PENDIENTE', observacion = NULL, id_usuario = NULL WHERE id_bloque = ?", [$b['id']]);
         $this->bitacora->accion($quien, BitacoraService::ANULAR, 'bloque');
         return ['titulo' => 'Validación anulada',
             'mensaje' => 'La validación del bloque de las <b>' . Validador::corta($hora) . '</b> fue anulada: el bloque queda <b>PENDIENTE</b>.',

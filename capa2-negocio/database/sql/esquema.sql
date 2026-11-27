@@ -94,7 +94,6 @@ CREATE TABLE bitacora (
     recurso         VARCHAR(60),                           -- modulo o dato afectado: Autenticación, Parrillas, programa...
     detalle         VARCHAR(500),                          -- que paso: Login, Registrar programa, GET /api/... -> 200
     ip              VARCHAR(45),                           -- IPv4 o IPv6 del cliente
-    agente_usuario  VARCHAR(255),                          -- navegador / sistema del cliente (User-Agent)
     fecha           TIMESTAMP    NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_bitacora_fecha ON bitacora (fecha DESC);
@@ -146,7 +145,7 @@ CREATE TABLE bloque (
     id_parrilla            INTEGER      NOT NULL REFERENCES parrilla (id_parrilla) ON DELETE CASCADE,
     id_programa            INTEGER      REFERENCES programa (id_programa),
     id_material            INTEGER      REFERENCES material (id_material),
-    validado_por           INTEGER      REFERENCES usuario (id_usuario),
+    id_usuario             INTEGER      REFERENCES usuario (id_usuario),
     hora_inicio            TIME         NOT NULL,
     hora_fin               TIME         NOT NULL,
     tipo                   VARCHAR(20)  NOT NULL CHECK (tipo IN ('PROGRAMA', 'PAUSA_COMERCIAL')),
@@ -159,13 +158,13 @@ CREATE TABLE bloque (
         (tipo = 'PROGRAMA' AND id_programa IS NOT NULL)
         OR (tipo = 'PAUSA_COMERCIAL' AND id_programa IS NULL AND id_material IS NULL)),
     CONSTRAINT ck_bloque_validacion CHECK (
-        (estado_validacion = 'PENDIENTE' AND validado_por IS NULL AND observacion IS NULL)
-        OR (estado_validacion = 'LISTO' AND validado_por IS NOT NULL)
-        OR (estado_validacion = 'OBSERVADO' AND validado_por IS NOT NULL AND btrim(observacion) <> ''))
+        (estado_validacion = 'PENDIENTE' AND id_usuario IS NULL AND observacion IS NULL)
+        OR (estado_validacion = 'LISTO' AND id_usuario IS NOT NULL)
+        OR (estado_validacion = 'OBSERVADO' AND id_usuario IS NOT NULL AND btrim(observacion) <> ''))
 );
 CREATE INDEX idx_bloque_programa ON bloque (id_programa);
 CREATE INDEX idx_bloque_material ON bloque (id_material);
-CREATE INDEX idx_bloque_validado_por ON bloque (validado_por);
+CREATE INDEX idx_bloque_usuario ON bloque (id_usuario);
 
 -- Dos bloques de la misma parrilla no se solapan: [hora_inicio, hora_fin).
 DO $$
@@ -408,6 +407,8 @@ CREATE TABLE pago (
 CREATE INDEX idx_pago_pauta ON pago (id_pauta);
 
 -- pago genera factura: cada cuota pagada tiene su factura con el NIT y la razon social que dio el anunciante al pagar.
+-- migrate:fresh borra las tablas pero no las secuencias sueltas: se recrea para que la numeracion vuelva a empezar
+DROP SEQUENCE IF EXISTS seq_numero_factura;
 CREATE SEQUENCE seq_numero_factura;
 CREATE TABLE factura (
     id_factura      SERIAL         PRIMARY KEY,
@@ -478,7 +479,7 @@ BEGIN
         OR NEW.hora_inicio <> OLD.hora_inicio OR NEW.hora_fin <> OLD.hora_fin)
        AND NOT EXISTS (SELECT 1 FROM conciliacion c WHERE c.id_bloque = NEW.id_bloque) THEN
         NEW.estado_validacion := 'PENDIENTE';
-        NEW.validado_por := NULL;
+        NEW.id_usuario := NULL;
         NEW.observacion := NULL;
     END IF;
     RETURN NEW;
@@ -492,7 +493,7 @@ DECLARE
     viejo  INTEGER;
 BEGIN
     IF TG_TABLE_NAME = 'material' THEN
-        UPDATE bloque b SET estado_validacion = 'PENDIENTE', validado_por = NULL, observacion = NULL
+        UPDATE bloque b SET estado_validacion = 'PENDIENTE', id_usuario = NULL, observacion = NULL
          WHERE b.estado_validacion <> 'PENDIENTE'
            AND NOT EXISTS (SELECT 1 FROM conciliacion c WHERE c.id_bloque = b.id_bloque)
            AND (b.id_material = NEW.id_material
@@ -507,7 +508,7 @@ BEGIN
     IF TG_OP <> 'INSERT' THEN
         viejo := OLD.id_bloque;
     END IF;
-    UPDATE bloque b SET estado_validacion = 'PENDIENTE', validado_por = NULL, observacion = NULL
+    UPDATE bloque b SET estado_validacion = 'PENDIENTE', id_usuario = NULL, observacion = NULL
      WHERE b.id_bloque IN (nuevo, viejo)
        AND b.estado_validacion <> 'PENDIENTE'
        AND NOT EXISTS (SELECT 1 FROM conciliacion c WHERE c.id_bloque = b.id_bloque);

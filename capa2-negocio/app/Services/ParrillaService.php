@@ -44,7 +44,7 @@ class ParrillaService
         . " CASE WHEN b.estado = 'CANCELADO' THEN coalesce(m.titulo, '') ELSE '' END AS titulo_reemplazo,"
         . " b.estado_validacion, coalesce(b.observacion, '') AS observacion, coalesce(uv.nombre || ' ' || uv.apellido, '') AS validado_por"
         . ' FROM bloque b LEFT JOIN programa p ON p.id_programa = b.id_programa LEFT JOIN material m ON m.id_material = b.id_material'
-        . ' LEFT JOIN usuario uv ON uv.id_usuario = b.validado_por';
+        . ' LEFT JOIN usuario uv ON uv.id_usuario = b.id_usuario';
 
     public function __construct(
         private BitacoraService $bitacora,
